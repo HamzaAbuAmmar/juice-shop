@@ -1,15 +1,19 @@
-name: Semgrep Scan
+name: Semgrep Scan with HTML Report
 
 on:
   pull_request:
     branches:
-      - '**'  # Triggers on all PR branches
+      - '**'
 
 jobs:
   semgrep:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write  # Needed to upload job summary
+
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
@@ -20,20 +24,20 @@ jobs:
       - name: Install Semgrep
         run: pip install semgrep
 
-      - name: Run Semgrep and output to terminal
-        run: semgrep scan --config=auto
+      - name: Run Semgrep and export SARIF
+        run: semgrep scan --config=auto --sarif -o semgrep.sarif
 
-      - name: Run Semgrep and generate HTML report
-        run: semgrep scan --config=auto --json > semgrep_output.json
-
-      - name: Convert JSON to HTML (basic example)
+      - name: Generate HTML report from SARIF
         run: |
-          echo '<html><body><pre>' > semgrep_report.html
-          cat semgrep_output.json | jq '.' >> semgrep_report.html
-          echo '</pre></body></html>' >> semgrep_report.html
+          pip install sarif-tools
+          mkdir semgrep-html
+          sarif-html semgrep.sarif > semgrep-html/index.html
 
       - name: Upload HTML report as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: semgrep-report
-          path: semgrep_report.html
+          name: Semgrep HTML Report
+          path: semgrep-html
+
+      - name: Post link to report in job summary
+        run: echo "🔗 [Download Semgrep HTML Report](./semgrep-html/index.html)" >> $GITHUB_STEP_SUMMARY

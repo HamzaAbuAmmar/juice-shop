@@ -3,7 +3,7 @@ name: Semgrep Scan
 on:
   pull_request:
     branches:
-      - '**'  # Triggers on all PR branches
+      - '**'
 
 jobs:
   semgrep:
@@ -21,19 +21,4 @@ jobs:
         run: pip install semgrep
 
       - name: Run Semgrep and output to terminal
-        run: semgrep --config=auto --text
-
-      - name: Run Semgrep and generate HTML report
-        run: semgrep scan --config=auto --json > semgrep_output.json
-
-      - name: Convert JSON to HTML (basic example)
-        run: |
-          echo '<html><body><pre>' > semgrep_report.html
-          cat semgrep_output.json | jq '.' >> semgrep_report.html
-          echo '</pre></body></html>' >> semgrep_report.html
-
-      - name: Upload HTML report as artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: semgrep-report
-          path: semgrep_report.html
+        run: semgrep scan --config=auto
